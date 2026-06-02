@@ -1,0 +1,26 @@
+#!/bin/sh
+MAVEN_VERSION="3.9.6"
+MAVEN_URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.zip"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+WRAPPER_DIR="$SCRIPT_DIR/.mvn/wrapper/dists"
+MAVEN_HOME="$WRAPPER_DIR/apache-maven-$MAVEN_VERSION"
+LOCAL_REPO="$SCRIPT_DIR/.mvn/repository"
+
+if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
+    echo "Downloading Maven $MAVEN_VERSION..."
+    mkdir -p "$WRAPPER_DIR"
+    if command -v curl >/dev/null 2>&1; then
+        curl -sLo "$WRAPPER_DIR/maven.zip" "$MAVEN_URL"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO "$WRAPPER_DIR/maven.zip" "$MAVEN_URL"
+    else
+        echo "Error: curl or wget is required to download Maven."
+        exit 1
+    fi
+    echo "Extracting Maven $MAVEN_VERSION..."
+    unzip -oq "$WRAPPER_DIR/maven.zip" -d "$WRAPPER_DIR"
+    rm "$WRAPPER_DIR/maven.zip"
+    chmod +x "$MAVEN_HOME/bin/mvn"
+fi
+
+exec "$MAVEN_HOME/bin/mvn" -Dmaven.repo.local="$LOCAL_REPO" "$@"

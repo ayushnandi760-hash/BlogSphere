@@ -1,0 +1,295 @@
+{
+  "info": {
+    "_postman_id": "blogsphere-api-collection-v1",
+    "name": "BlogSphere API",
+    "description": "Complete REST API collection for BlogSphere — a full-stack blogging platform built with Spring Boot 3 & JWT Security.\n\n**Base URL:** `http://localhost:8080`\n\n**Authentication:** Bearer JWT Token. Run the Login request first, copy the `token` value from the response, and set it as the `jwt_token` collection variable.\n\n**Collection Variables:**\n- `base_url` → `http://localhost:8080`\n- `jwt_token` → _(paste from login response)_",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "jwt_token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"profileImage\": \"\"\n}"
+            },
+            "description": "Register a new user account. `profileImage` is optional — a DiceBear avatar is generated if left empty."
+          },
+          "response": [
+            {
+              "name": "201 — Registration Success",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"User registered successfully!\"\n}"
+            },
+            {
+              "name": "400 — Email Already Taken",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Error: Email is already in use!\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('jwt_token', json.token);",
+                  "  console.log('✅ JWT Token saved to collection variable.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "description": "Authenticate with email & password. The test script auto-saves the returned JWT into the `jwt_token` collection variable."
+          },
+          "response": [
+            {
+              "name": "200 — Login Success",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"id\": 1,\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"role\": \"ROLE_USER\",\n  \"profileImage\": \"https://api.dicebear.com/7.x/adventurer/svg?seed=Jane+Doe\"\n}"
+            },
+            {
+              "name": "401 — Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Full authentication is required to access this resource\",\n  \"error\": \"Unauthorized\",\n  \"status\": 401\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 User Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "{{base_url}}/api/users/profile", "host": ["{{base_url}}"], "path": ["api", "users", "profile"] },
+            "description": "Retrieve the authenticated user's profile. Requires a valid JWT token in the Authorization header."
+          },
+          "response": [
+            {
+              "name": "200 — Profile Data",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"bio\": \"Frontend developer and tech writer.\",\n  \"profileImage\": \"https://api.dicebear.com/7.x/adventurer/svg?seed=Jane+Doe\",\n  \"role\": \"ROLE_USER\",\n  \"createdAt\": \"2025-01-15T10:30:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/users/profile", "host": ["{{base_url}}"], "path": ["api", "users", "profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"bio\": \"Full-stack developer, coffee enthusiast.\",\n  \"profileImage\": \"https://example.com/my-photo.jpg\",\n  \"password\": \"\",\n  \"confirmPassword\": \"\"\n}"
+            },
+            "description": "Update name, bio, profile image, or password. Leave `password` and `confirmPassword` as empty strings to skip password change."
+          },
+          "response": [
+            {
+              "name": "200 — Updated Profile",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@example.com\",\n  \"bio\": \"Full-stack developer, coffee enthusiast.\",\n  \"profileImage\": \"https://example.com/my-photo.jpg\",\n  \"role\": \"ROLE_USER\",\n  \"createdAt\": \"2025-01-15T10:30:00\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📝 Blogs",
+      "item": [
+        {
+          "name": "Get All Blogs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/blogs", "host": ["{{base_url}}"], "path": ["api", "blogs"] },
+            "description": "Public endpoint. Returns a list of all published blog posts, newest first."
+          },
+          "response": [
+            {
+              "name": "200 — Blog List",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  {\n    \"id\": 1,\n    \"title\": \"Getting Started with Spring Boot 3\",\n    \"content\": \"Spring Boot 3 brings native image support...\",\n    \"category\": \"Technology\",\n    \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c\",\n    \"authorId\": 1,\n    \"authorName\": \"Jane Doe\",\n    \"authorProfileImage\": \"https://api.dicebear.com/7.x/adventurer/svg?seed=Jane+Doe\",\n    \"createdAt\": \"2025-01-16T08:00:00\",\n    \"updatedAt\": \"2025-01-16T09:15:00\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Blog By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/blogs/1", "host": ["{{base_url}}"], "path": ["api", "blogs", "1"] },
+            "description": "Public endpoint. Returns a single blog post by its numeric ID."
+          },
+          "response": [
+            {
+              "name": "200 — Blog Detail",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"title\": \"Getting Started with Spring Boot 3\",\n  \"content\": \"Spring Boot 3 brings native image support via GraalVM...\",\n  \"category\": \"Technology\",\n  \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c\",\n  \"authorId\": 1,\n  \"authorName\": \"Jane Doe\",\n  \"authorProfileImage\": \"https://api.dicebear.com/7.x/adventurer/svg?seed=Jane+Doe\",\n  \"createdAt\": \"2025-01-16T08:00:00\",\n  \"updatedAt\": \"2025-01-16T09:15:00\"\n}"
+            },
+            {
+              "name": "404 — Blog Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Blog not found with id: 999\",\n  \"status\": 404\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Blogs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/blogs/search?keyword=spring",
+              "host": ["{{base_url}}"],
+              "path": ["api", "blogs", "search"],
+              "query": [{ "key": "keyword", "value": "spring" }]
+            },
+            "description": "Public endpoint. Full-text search across blog titles and content. Returns all blogs if `keyword` is omitted."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Blogs By Author",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/blogs/author/1", "host": ["{{base_url}}"], "path": ["api", "blogs", "author", "1"] },
+            "description": "Public endpoint. Returns all blogs written by a specific author (by user ID)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Blog Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/blogs", "host": ["{{base_url}}"], "path": ["api", "blogs"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"10 Tips for Writing Clean Java Code\",\n  \"content\": \"Writing clean code is an art form. Here are the top 10 tips every Java developer should know...\",\n  \"category\": \"Technology\",\n  \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c\"\n}"
+            },
+            "description": "Protected endpoint. Creates a new blog post owned by the authenticated user. `coverImage` is optional."
+          },
+          "response": [
+            {
+              "name": "201 — Blog Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 5,\n  \"title\": \"10 Tips for Writing Clean Java Code\",\n  \"content\": \"Writing clean code is an art form...\",\n  \"category\": \"Technology\",\n  \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c\",\n  \"authorId\": 1,\n  \"authorName\": \"Jane Doe\",\n  \"authorProfileImage\": \"https://api.dicebear.com/7.x/adventurer/svg?seed=Jane+Doe\",\n  \"createdAt\": \"2025-01-20T14:00:00\",\n  \"updatedAt\": \"2025-01-20T14:00:00\"\n}"
+            },
+            {
+              "name": "400 — Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"errors\": {\n    \"title\": \"Title is required\",\n    \"content\": \"Content cannot be blank\"\n  },\n  \"status\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Blog Post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/blogs/5", "host": ["{{base_url}}"], "path": ["api", "blogs", "5"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"10 Tips for Writing Clean Java Code (Updated)\",\n  \"content\": \"Writing clean code is an art form. Updated content here...\",\n  \"category\": \"Technology\",\n  \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c\"\n}"
+            },
+            "description": "Protected endpoint. Updates a blog post. The authenticated user must be the original author — otherwise a 403 Forbidden is returned."
+          },
+          "response": [
+            {
+              "name": "200 — Blog Updated",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 5,\n  \"title\": \"10 Tips for Writing Clean Java Code (Updated)\",\n  \"content\": \"Updated content here...\",\n  \"category\": \"Technology\",\n  \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c\",\n  \"authorId\": 1,\n  \"authorName\": \"Jane Doe\",\n  \"authorProfileImage\": \"https://api.dicebear.com/7.x/adventurer/svg?seed=Jane+Doe\",\n  \"createdAt\": \"2025-01-20T14:00:00\",\n  \"updatedAt\": \"2025-01-20T15:30:00\"\n}"
+            },
+            {
+              "name": "403 — Not the Author",
+              "status": "Forbidden",
+              "code": 403,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"You are not authorized to modify this blog post.\",\n  \"status\": 403\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Blog Post",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "{{base_url}}/api/blogs/5", "host": ["{{base_url}}"], "path": ["api", "blogs", "5"] },
+            "description": "Protected endpoint. Permanently deletes a blog post. The authenticated user must be the original author."
+          },
+          "response": [
+            {
+              "name": "200 — Deleted",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Blog post deleted successfully!\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
