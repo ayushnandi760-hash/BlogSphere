@@ -18,7 +18,7 @@ services:
         sync: false          # Set this in Render dashboard
       - key: DB_PASSWORD
         sync: false          # Set this in Render dashboard
-      - key: blogsphere.app.jwtSecret
+      - key: JWT_SECRET
         generateValue: false  # Paste your 256-bit hex secret in dashboard
       - key: blogsphere.app.jwtExpirationMs
         value: "86400000"
